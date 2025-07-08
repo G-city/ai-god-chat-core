@@ -1,14 +1,10 @@
 # supabase.toml
+project_id = "ylupyfxgnynvrqthclbd"
 
-project_id = "ylupyfxgnynvrqthclbd"  # เปลี่ยนให้ตรงกับ Project Ref ของคุณ
-org_id = ""                          # ถ้ายังไม่มี ไม่ต้องใส่ก็ได้
 [functions]
-  # การตั้งค่าทั่วไปของฟังก์ชัน
+# ฟังก์ชันทั้งหมด
 
 [functions.ai_chat]
-  # Path ไปยังโฟลเดอร์ฟังก์ชัน
   included_files = ["functions/ai_chat/.env"]
-  # ระบุว่าใช้ environment แบบไหน
   verify_jwt = false
-  region = "aws-ap-southeast-1"  # เปลี่ยนตามที่ตั้งของคุณ (เช่นสิงคโปร์)
-
+  region = "aws-ap-southeast-1"
