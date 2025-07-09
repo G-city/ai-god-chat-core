@@ -1,10 +1,5 @@
-# supabase.toml
-project_id = "ylupyfxgnynvrqthclbd"
-
 [functions]
-# ฟังก์ชันทั้งหมด
+source = "functions"
 
 [functions.ai_chat]
-  included_files = ["functions/ai_chat/.env"]
-  verify_jwt = false
-  region = "aws-ap-southeast-1"
+verify_jwt = false
