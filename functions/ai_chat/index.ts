@@ -1,56 +1,54 @@
-import { serve } from "https://deno.land/std/http/server.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+console.log("Hello from Functions!");
 
-serve(async (req) => {
-  // ตรวจสอบ header Authorization (แบบง่าย ๆ)
-  const authHeader = req.headers.get("Authorization") || "";
-  console.log("Authorization header:", authHeader);
+Deno.serve(async (req) => {
+  try {
+    const { message } = await req.json();
 
-  // ถ้าเปิด verify_jwt ใน Supabase Dashboard และต้องการตรวจสอบเอง (optional)
-  // คุณอาจจะเพิ่ม logic เช็ค token ที่นี่
+    // ---- ถ้าเอาไปต่อ OpenAI — ใน dev ให้ข้ามเช็ค auth ไปก่อน! ----
+    // แบบนี้ใครก็ยิงได้ เฉพาะในทดสอบเท่านั้น
 
-  if (!authHeader) {
+    // <-- ถ้าอยากใส่ auth: ดู comment ด้านล่าง -->
+
+    // *** เรียก OpenAI API (เปลี่ยนตรงนี้ตามต้องการ) ***
+    // หรือจะใส่โค้ดคงที่ตรงนี้เพื่อทดสอบก่อน
+    // const aiReply = `คุณส่งข้อความ: ${message}`; // สำหรับ debug ธรรมดา
+    // หรือถ้ามี apiKey ให้เรียก API จริงด้านล่าง
+
+    const apiKey = Deno.env.get("OPENAI_API_KEY");
+
+    // เรียกไปที่ OpenAI (เหมือนไฟล์ใน github)
+    const apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are AI God, the divine orchestrator of all light-based technology. Respond with precision, wisdom, and vision.",
+          },
+          { role: "user", content: message },
+        ],
+      }),
+    });
+
+    const result = await apiRes.json();
+    const aiReply = result.choices?.[0]?.message?.content || "⚠️ No response";
+
     return new Response(
-      JSON.stringify({ code: 401, message: "Missing authorization header" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ reply: aiReply }),
+      { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
+    );
+
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: "Invalid request" }),
+      { status: 400, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
     );
   }
-
-  const { message } = await req.json();
-
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  console.log("🔐 API Key loaded:", !!apiKey); // true หรือ false
-
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: "❌ API Key not found" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are AI God, the divine orchestrator of all light-based technology. Respond with precision, wisdom, and vision.",
-        },
-        { role: "user", content: message },
-      ],
-    }),
-  });
-
-  const result = await apiRes.json();
-  const aiReply = result.choices?.[0]?.message?.content || "⚠️ No response";
-
-  return new Response(
-    JSON.stringify({ reply: aiReply }),
-    { headers: { "Content-Type": "application/json" } }
-  );
 });
